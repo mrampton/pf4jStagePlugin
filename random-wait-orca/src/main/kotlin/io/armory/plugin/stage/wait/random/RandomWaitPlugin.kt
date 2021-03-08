@@ -1,11 +1,15 @@
 package io.armory.plugin.stage.wait.random
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.netflix.spinnaker.kork.expressions.ExpressionEvaluationSummary
 import com.netflix.spinnaker.orca.api.pipeline.Task
 import com.netflix.spinnaker.orca.api.pipeline.TaskResult
 import com.netflix.spinnaker.orca.api.pipeline.graph.StageDefinitionBuilder
+import com.netflix.spinnaker.orca.pipeline.ExpressionAwareStageDefinitionBuilder
 import com.netflix.spinnaker.orca.api.pipeline.graph.TaskNode
 import com.netflix.spinnaker.orca.api.pipeline.models.ExecutionStatus
 import com.netflix.spinnaker.orca.api.pipeline.models.StageExecution
+import com.netflix.spinnaker.orca.pipeline.util.ContextParameterProcessor
 import java.util.*
 import java.util.concurrent.TimeUnit
 import org.pf4j.Extension
@@ -30,7 +34,7 @@ class RandomWaitPlugin(wrapper: PluginWrapper) : Plugin(wrapper) {
  * @see com.netflix.spinnaker.orca.api.StageDefinitionBuilder
  */
 @Extension
-class RandomWaitStage : StageDefinitionBuilder {
+class RandomWaitStage(mapper: ObjectMapper) : ExpressionAwareStageDefinitionBuilder() {
 
   /**
    * This function describes the sequence of substeps, or "tasks" that comprise this
@@ -39,9 +43,24 @@ class RandomWaitStage : StageDefinitionBuilder {
    * This method is called just before a stage is executed. The task graph can be generated
    * programmatically based on the stage's context.
    */
+
+  private val mapper: ObjectMapper
+  init {
+    this.mapper = mapper
+  }
+
   override fun taskGraph(stage: StageExecution, builder: TaskNode.Builder) {
     builder.withTask("randomWait", RandomWaitTask::class.java)
   }
+
+    override fun processExpressions(
+      stage: StageExecution,
+      contextParameterProcessor: ContextParameterProcessor,
+      summary: ExpressionEvaluationSummary
+  ): Boolean {
+    return true
+  }
+
 }
 
 @Extension
